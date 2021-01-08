@@ -1,0 +1,1603 @@
+Milestone Controller unit test
+
+using AutoFixture;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using NUnit.Framework;
+using QI.QR.Business.Entities;
+using QI.QR.Business.Services;
+using QI.QR.Controllers;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Text;
+
+namespace QI.QR.Tests.Unit.Controllers
+{
+    [TestFixture]
+    public class MilestonesControllerTest
+    {
+        private Mock<IMilestonesService> _milestonesService;
+        private Mock<IHttpRequestRelay> _httpRequestRelay;
+        private MilestonesController _milestonesController;
+
+        private Fixture _fixture;
+
+        [SetUp]
+        public void MilestonesControllerTestsSetup()
+        {
+            _milestonesService = new Mock<IMilestonesService>(MockBehavior.Strict);
+            _httpRequestRelay = new Mock<IHttpRequestRelay>(MockBehavior.Strict);
+
+            _milestonesController = new MilestonesController(_milestonesService.Object, _httpRequestRelay.Object);
+
+            _fixture = new Fixture();
+        }
+
+        [TestFixture]
+        public class GetMilestones : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_get_milestones_list()
+            {
+                //arrange
+                var expected = _fixture.Create<string>();
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var orgId = _fixture.Create<int>();
+                var measurementYear = _fixture.Create<int>();
+
+                var httpContext = new Mock<HttpContext>();
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+                _milestonesService.Setup(m => m.GetMilestones(requestData, orgId, measurementYear)).Returns(expected);
+
+                //act
+                var actual = _milestonesController.GetMilestones(orgId, measurementYear) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expected);
+            }
+        }
+
+        [TestFixture]
+        public class CreateMethod : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_create_milestone()
+            {
+                //arrange
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var expectedContent = _fixture.Create<string>();
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var milestone = _fixture.Create<MilestoneModel>();
+                var expectedMilestoneId = _fixture.Create<int>();
+
+                var response = new Mock<HttpResponse>();
+                response.SetupGet(r => r.StatusCode).Returns((int)expectedStatusCode);
+
+                var httpContext = new Mock<HttpContext>();
+                httpContext.SetupGet(a => a.Response).Returns(response.Object);
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesService.Setup(m => m.Create(requestData)).Returns((expectedContent, expectedStatusCode));
+
+                //act
+                var actual = _milestonesController.Create(milestone) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expectedContent);
+                Assert.AreEqual(_milestonesController.Response.StatusCode, (int)expectedStatusCode);
+            }
+        }
+
+        [TestFixture]
+        public class UpdateMethod : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_update_milestone()
+            {
+                //arrange
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var milestone = _fixture.Create<MilestoneModel>();
+                var milestoneId = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var expectedContent = _fixture.Create<string>();
+
+                var response = new Mock<HttpResponse>();
+                response.SetupGet(r => r.StatusCode).Returns((int)expectedStatusCode);
+
+                var httpContext = new Mock<HttpContext>();
+                httpContext.SetupGet(a => a.Response).Returns(response.Object);
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesService.Setup(m => m.Update(orgId, milestoneId, requestData)).Returns((expectedContent, expectedStatusCode));
+
+                //act
+                var actual = _milestonesController.Update(milestoneId, orgId, milestone) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expectedContent);
+                Assert.AreEqual(_milestonesController.Response.StatusCode, (int)expectedStatusCode);
+            }
+        }
+
+        [TestFixture]
+        public class DeleteMethod : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_delete_milestone_by_id()
+            {
+                //arrange
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var milestoneId = _fixture.Create<int>();
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var expectedContent = _fixture.Create<string>();
+
+                var response = new Mock<HttpResponse>();
+                response.SetupGet(r => r.StatusCode).Returns((int)expectedStatusCode);
+
+                var httpContext = new Mock<HttpContext>();
+                httpContext.SetupGet(a => a.Response).Returns(response.Object);
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesService.Setup(m => m.Delete(milestoneId, requestData)).Returns((expectedContent, expectedStatusCode));
+
+                //act
+                var actual = _milestonesController.Delete(milestoneId) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expectedContent);
+                Assert.AreEqual(_milestonesController.Response.StatusCode, (int)expectedStatusCode);
+            }
+        }
+
+        [TestFixture]
+        public class CompleteMilestone : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_complete_milestone()
+            {
+                //arrange
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var orgId = _fixture.Create<int>();
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var expectedContent = _fixture.Create<string>();
+                var milestone = _fixture.Create<MilestoneModel>();
+
+                var response = new Mock<HttpResponse>();
+                response.SetupGet(r => r.StatusCode).Returns((int)expectedStatusCode);
+
+                var httpContext = new Mock<HttpContext>();
+                httpContext.SetupGet(a => a.Response).Returns(response.Object);
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesService.Setup(m => m.CompleteMilestone(orgId, requestData)).Returns((expectedContent, expectedStatusCode));
+
+                //act
+                var actual = _milestonesController.CompleteMilestone(orgId, milestone) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expectedContent);
+                Assert.AreEqual(_milestonesController.Response.StatusCode, (int)expectedStatusCode);
+            }
+        }
+
+        [TestFixture]
+        public class HideShowMilestone : MilestonesControllerTest
+        {
+            [Test]
+            public void Should_hideshow_milestone()
+            {
+                //arrange
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var orgId = _fixture.Create<int>();
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var expectedContent = _fixture.Create<string>();
+                var milestone = _fixture.Create<MilestoneModel>();
+
+                var response = new Mock<HttpResponse>();
+                response.SetupGet(r => r.StatusCode).Returns((int)expectedStatusCode);
+
+                var httpContext = new Mock<HttpContext>();
+                httpContext.SetupGet(a => a.Response).Returns(response.Object);
+
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+
+                _milestonesController.ControllerContext = new ControllerContext
+                {
+                    HttpContext = httpContext.Object
+                };
+
+                _httpRequestRelay.Setup(m => m.GetHttpRequestData(request)).Returns(requestData);
+
+                _milestonesService.Setup(m => m.HideShowMilestone(orgId, requestData)).Returns((expectedContent, expectedStatusCode));
+
+                //act
+                var actual = _milestonesController.HideShowMilestone(orgId, milestone) as ContentResult;
+
+                //assert
+                Assert.AreEqual(actual.ContentType, ContentType.ApplicationJson);
+                Assert.AreEqual(actual.Content, expectedContent);
+                Assert.AreEqual(_milestonesController.Response.StatusCode, (int)expectedStatusCode);
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Lsf1 Controller unit test
+
+using AutoFixture;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
+using NUnit.Framework;
+using QI.QEL.Business.Compliance.Entities;
+using QI.QEL.DAL.Compliance.DTO;
+using QI.QR.Business.Entities;
+using QI.QR.Business.Entities.DataCollection;
+using QI.QR.Business.Services;
+using QI.QR.Business.Services.DataCollection;
+using QI.QR.Business.Services.DataCollection.StateAndCustomMeasure;
+using QI.QR.Business.Utilities;
+using QI.QR.Controllers.DataCollection;
+using QI.QR.Controllers.DataCollection.StateAndCustomMeasures;
+using QI.QR.DAL.DTO.DataCollection;
+using System.Collections.Generic;
+using System.Net;
+
+namespace QI.QR.Tests.Unit.Controllers.DataCollection.StateAndCustomMeasures
+{
+    [TestFixture]
+    public class Lsf1SampleControllerTests
+    {
+        private Mock<ILsf1SampleService> _lsf1SampleService;
+        private Lsf1SampleController _lsf1SampleController;
+        private Fixture _fixture;
+        private Mock<IHttpRequestRelay> _httpRequestReplay;
+        private Mock<IIrrSampleService> _irrSampleService;
+        [SetUp]
+        public void Lsf1SampleControllerTestsSetUp()
+        {
+            _lsf1SampleService = new Mock<ILsf1SampleService>(MockBehavior.Strict);
+            _httpRequestReplay = new Mock<IHttpRequestRelay>(MockBehavior.Strict);
+            _irrSampleService = new Mock<IIrrSampleService>(MockBehavior.Strict);
+            _lsf1SampleController = new Lsf1SampleController(_lsf1SampleService.Object, _irrSampleService.Object);
+            _fixture = new Fixture();
+        }
+
+        [TestFixture]
+        public class GetMethod : Lsf1SampleControllerTests
+        {
+            [Test]
+            public void Should_get_Lsf1_sample_detail()
+            {
+                //arrange
+                var expectedStatusCode = _fixture.Create<HttpStatusCode>();
+                var lstSampleData = _fixture.Create<List<Lsf1SampleModel>>();
+
+                QueryParameters queryParameters = _fixture.Create<QueryParameters>();
+                _lsf1SampleService.Setup(m => m.GetSampleDetails(queryParameters)).Returns(lstSampleData);
+
+                //act
+                var actual = _lsf1SampleController.GetSampleDetails(queryParameters) as OkObjectResult;
+
+                //assert
+                Assert.AreEqual(actual.Value, lstSampleData);
+                Assert.AreEqual(actual.StatusCode, (int)HttpStatusCode.OK);
+            }
+        }
+        [TestFixture]
+        public class SaveMethod : Lsf1SampleControllerTests
+        {
+
+            [Test]
+            public void Should_saveSampleDetail()
+            {
+                //arrange
+                Lsf1ChaseSampleVM ChaseSampleVM = _fixture.Create<Lsf1ChaseSampleVM>();
+                _lsf1SampleService.Setup(x => x.Insert(ChaseSampleVM));
+
+                //act
+                var result = _lsf1SampleController.CreateNewDCTData(ChaseSampleVM) as OkResult;
+
+                //assert
+                Assert.AreEqual(result.StatusCode, (int)HttpStatusCode.OK);
+            }
+        }
+
+        [TestFixture]
+        public class SaveIrrTestAnswer : Lsf1SampleControllerTests
+        {
+
+            [Test]
+            public void should_save_answer_key()
+            {
+                //arrange
+                Lsf1ChaseSampleVM ChaseSampleVM = new Lsf1ChaseSampleVM
+                {
+                    ChaseDetail = _fixture.Create<ChaseReportLinkModel>(),
+                    SampleDetail = _fixture.Create<Lsf1SampleModel>(),
+                    ExclusionDetail = _fixture.Create<ExclusionModel>(),
+                    NonComplianceReasonDetail = _fixture.Create<List<SampleNonComplianceReasonModel>>()
+                };
+                var expectedResult = _fixture.Create<IrrTestResponseModel>();
+                var httpContext = new Mock<HttpContext>();
+                var requestData = _fixture.Create<HttpRequestRelayData>();
+                var request = Mock.Of<HttpRequest>();
+                httpContext.SetupGet(c => c.Request).Returns(request);
+                _httpRequestReplay.Setup(m => m.GetHttpRequestData(null)).Returns(requestData);
+                _irrSampleService.Setup(x => x.SaveAnswerKeyAndIrrTest<Lsf1SampleModel,Lsf1SampleDTO>(ChaseSampleVM.SampleDetail, DAL.Utilities.HybridMeasure.LSF1, ChaseSampleVM.Action)).Returns(expectedResult);
+                //action
+                var result = _lsf1SampleController.SaveIrrTestAnswer(ChaseSampleVM) as OkObjectResult;
+                //assert
+                _irrSampleService.VerifyAll();
+                Assert.AreEqual(result.StatusCode, (int)HttpStatusCode.OK);
+                Assert.AreEqual(result.Value, expectedResult);
+            }
+        }
+
+        [TestFixture]
+        public class DeleteMethod : Lsf1SampleControllerTests
+        {
+
+            [Test]
+            public void Should_delete_sample_detail_by_sample_id_chase_and_reviewer()
+            {
+                //arrange
+                int sampleId = _fixture.Create<int>();
+                int chaseId = _fixture.Create<int>();
+                string reviewer = _fixture.Create<string>();
+                var queryParameters = new QueryParameters() { sampleID = 1, chaseID = 2 };
+
+                _lsf1SampleService.Setup(x => x.UpdateChaseDataWithDeleteStatus(queryParameters)).Returns(true);
+
+                //act
+                var result = _lsf1SampleController.DeleteChaseData(queryParameters) as OkObjectResult;
+
+                //assert
+                Assert.AreEqual(result.Value, true);
+                Assert.AreEqual(result.StatusCode, (int)HttpStatusCode.OK);
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Milestone Service unit test
+
+using QI.QR.Business.Components;
+using QI.QR.Business.Entities;
+using RestSharp;
+using System;
+using System.Collections.Generic;
+using System.Net;
+using System.Text;
+
+namespace QI.QR.Business.Services
+{
+    public interface IMilestonesService
+    {
+        string GetMilestones(HttpRequestRelayData httpRequestRelayData, int orgId, int measurementYear);
+        (string content, HttpStatusCode httpStatusCode) Create(HttpRequestRelayData httpRequestRelayData);
+        (string content, HttpStatusCode httpStatusCode) Update(int orgId,int milestoneId, HttpRequestRelayData httpRequestRelayData);
+        (string content, HttpStatusCode httpStatusCode) Delete(int milestoneId, HttpRequestRelayData httpRequestRelayData);
+        (string content, HttpStatusCode httpStatusCode) CompleteMilestone(int orgId, HttpRequestRelayData httpRequestRelayData);
+        (string content, HttpStatusCode httpStatusCode) HideShowMilestone(int orgId, HttpRequestRelayData httpRequestRelayData);
+    }
+
+    public class MilestonesService : IMilestonesService
+    {
+        public const string URL_PATH = "Milestones";
+        public const string URL_PATH_WITH_ID = "Milestones/{id}";
+        public const string URL_PATH_WITH_COMPLETE_MILESTONE = "Milestones/Complete";
+        public const string URL_PATH_WITH_HIDESHOW_MILESTONE = "Milestones/Hideshow";
+
+        private IRestClient _restClient;
+        private IApplicationConnection _appConnection;
+        private IHttpRequestRestSharp _httpRequestRelayRestSharp;
+
+        public MilestonesService(IApplicationConnection appConnection, IRestClient restClient, IHttpRequestRestSharp httpRequestRelayRestSharp)
+        {
+            _restClient = restClient;
+            _appConnection = appConnection;
+            _restClient.BaseUrl = new Uri(_appConnection.AuthServURL);
+
+            _httpRequestRelayRestSharp = httpRequestRelayRestSharp;
+        }
+
+        public string GetMilestones(HttpRequestRelayData httpRequestRelayData, int orgId, int measurementYear)
+        {
+            var request = new RestRequest(URL_PATH, Method.GET);
+            request.AddUrlSegment("orgId", orgId);
+            request.AddUrlSegment("measurementYear", measurementYear);
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+            var response = _restClient.Execute(request);
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return response.Content;
+            }
+        }
+
+        public (string content, HttpStatusCode httpStatusCode) Create(HttpRequestRelayData httpRequestRelayData)
+        {
+            var request = new RestRequest(URL_PATH, Method.POST);
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+
+            var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return (response.Content, response.StatusCode);
+            }
+        }
+
+        public (string content, HttpStatusCode httpStatusCode) Update(int orgId,int milestoneId, HttpRequestRelayData httpRequestRelayData)
+        {
+            var request = new RestRequest(URL_PATH_WITH_ID, Method.PUT);
+            request.AddUrlSegment("id", milestoneId);
+            request.AddQueryParameter("orgId", orgId.ToString());
+
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+
+            var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return (response.Content, response.StatusCode);
+            }
+        }
+
+        public (string content, HttpStatusCode httpStatusCode) Delete(int milestoneId, HttpRequestRelayData httpRequestRelayData)
+        {
+            var request = new RestRequest(URL_PATH_WITH_ID, Method.DELETE);
+            request.AddUrlSegment("id", milestoneId);
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+
+            var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return (response.Content, response.StatusCode);
+            }
+        }
+
+        public (string content, HttpStatusCode httpStatusCode) CompleteMilestone(int orgId, HttpRequestRelayData httpRequestRelayData)
+        {
+            var request = new RestRequest(URL_PATH_WITH_COMPLETE_MILESTONE, Method.PUT);
+            request.AddUrlSegment("orgId", orgId);
+
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+
+            var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return (response.Content, response.StatusCode);
+            }
+        }
+
+        public (string content, HttpStatusCode httpStatusCode) HideShowMilestone(int orgId, HttpRequestRelayData httpRequestRelayData)
+        {
+            var request = new RestRequest(URL_PATH_WITH_HIDESHOW_MILESTONE, Method.PUT);
+            request.AddUrlSegment("orgId", orgId);
+
+            _httpRequestRelayRestSharp.SetHttpRequestData(httpRequestRelayData, request);
+
+            var response = _restClient.Execute(request);
+
+            if (response.ErrorException != null)
+            {
+                throw response.ErrorException;
+            }
+            else
+            {
+                return (response.Content, response.StatusCode);
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Lsf1 Service unit test
+
+using AutoFixture;
+using AutoMapper;
+using Exceptionless;
+using FluentAssertions;
+using Moq;
+using NUnit.Framework;
+using QI.QEL.Business.Compliance.Entities;
+using QI.QEL.Business.Compliance.Services;
+using QI.QEL.DAL.Compliance.DTO;
+using QI.QEL.DAL.Compliance.Repo;
+using QI.QEL.Database;
+using QI.QR.Business.Components;
+using QI.QR.Business.Components.DataCollection.SampleHistoryManagement;
+using QI.QR.Business.Entities;
+using QI.QR.Business.Entities.DataCollection;
+using QI.QR.Business.Services;
+using QI.QR.Business.Services.DataCollection.StateAndCustomMeasure;
+using QI.QR.Business.Utilities;
+using QI.QR.DAL.DTO;
+using QI.QR.DAL.DTO.DataCollection;
+using QI.QR.DAL.Repos;
+using QI.QR.DAL.Repos.DataCollection;
+using QI.QR.DAL.Repos.DataCollection.StateAndCustomMeasure;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+
+namespace QI.QR.Business.Tests.Unit.Services.StateAndCustomMeasures
+{
+    [TestFixture]
+    public class Lsf1SampleServiceTests
+    {
+        private Mock<ILsf1SampleRepo> _lsf1SampleRepo;
+        private Mock<IMapper> _mapper;
+        private Lsf1SampleService _lsf1SampleService;
+        private Fixture _fixture;
+        private Mock<ISampleRepo> _commonSampleRepo;
+        private Mock<ISampleNonComplianceRepo> _sampleNonComplianceRepo;
+        private Mock<IChaseReportLinkRepo> _chaseReportLinkRepo;
+        private Mock<IOVerreadsRepo> _overreadRepo;
+        private Mock<ILsf1ComplianceRepo> _lsf1ComplianceRepo;
+        private Mock<IConnectionFactory> _connectionFactory;
+        private Mock<ITransactionScopeFactory> _transactionScopeFactory;
+        private Mock<ILsf1SampleHistoryManagementComponent> _lsf1SampleHistoryManagementComponent;
+        private Mock<ISampleCompleteService> _sampleCompleteService;
+        private Mock<IExclusionService> _exclusionService;
+        private Mock<IOverreadservice> _overreadService;
+        private Mock<IChaseWorkflowService> _chaseWorkFlowService;
+        private Mock<IChaseExhaustedService> _chaseExhaustedService;
+        private Mock<IIrrChaseResultRepo> _irrChaseResultRepo;
+        private Mock<IIrrPointCalculationComponent> _irrPointCalculationComponent;
+        private Mock<IRunDSTService> _runDstService;
+        private Mock<ICurrentUser> _currentUser;
+        private Mock<ILsf1SampleComplianceService> _lsf1SampleComplianceService;
+        public Lsf1SampleServiceTests()
+        {
+            _lsf1SampleRepo = new Mock<ILsf1SampleRepo>(MockBehavior.Strict);
+            _mapper = new Mock<IMapper>(MockBehavior.Strict);
+            _fixture = new Fixture();
+            _fixture = new Fixture();
+            _sampleNonComplianceRepo = new Mock<ISampleNonComplianceRepo>(MockBehavior.Strict);
+            _chaseReportLinkRepo = new Mock<IChaseReportLinkRepo>(MockBehavior.Strict);
+            _overreadRepo = new Mock<IOVerreadsRepo>(MockBehavior.Strict);
+            _lsf1ComplianceRepo = new Mock<ILsf1ComplianceRepo>(MockBehavior.Strict);
+            _lsf1SampleHistoryManagementComponent = new Mock<ILsf1SampleHistoryManagementComponent>(MockBehavior.Strict);
+            _connectionFactory = new Mock<IConnectionFactory>(MockBehavior.Strict);
+            _transactionScopeFactory = new Mock<ITransactionScopeFactory>(MockBehavior.Strict);
+            _sampleCompleteService = new Mock<ISampleCompleteService>(MockBehavior.Strict);
+            _exclusionService = new Mock<IExclusionService>(MockBehavior.Strict);
+            _overreadService = new Mock<IOverreadservice>(MockBehavior.Strict);
+            _chaseWorkFlowService = new Mock<IChaseWorkflowService>(MockBehavior.Strict);
+            _chaseExhaustedService = new Mock<IChaseExhaustedService>(MockBehavior.Strict);
+            _irrChaseResultRepo = new Mock<IIrrChaseResultRepo>(MockBehavior.Strict);
+            _irrPointCalculationComponent = new Mock<IIrrPointCalculationComponent>(MockBehavior.Strict);
+            _runDstService = new Mock<IRunDSTService>(MockBehavior.Strict);
+            _currentUser = new Mock<ICurrentUser>(MockBehavior.Strict);
+            _commonSampleRepo = new Mock<ISampleRepo>(MockBehavior.Strict);
+            _lsf1SampleComplianceService = new Mock<ILsf1SampleComplianceService>(MockBehavior.Strict);
+            _lsf1SampleService = new Lsf1SampleService(_lsf1SampleRepo.Object, _mapper.Object, _commonSampleRepo.Object,
+                _chaseReportLinkRepo.Object, _exclusionService.Object, _overreadRepo.Object,
+                _transactionScopeFactory.Object,
+                _connectionFactory.Object,
+                _sampleNonComplianceRepo.Object,
+                _sampleCompleteService.Object,
+                _overreadService.Object,
+                _chaseWorkFlowService.Object,
+                _chaseExhaustedService.Object,
+                _irrChaseResultRepo.Object,
+                _irrPointCalculationComponent.Object,
+                _runDstService.Object,
+                _currentUser.Object,
+                _lsf1SampleHistoryManagementComponent.Object,
+                _lsf1ComplianceRepo.Object,
+                _lsf1SampleComplianceService.Object);
+        }
+        [TestFixture]
+        public class GetMethod : Lsf1SampleServiceTests
+        {
+            [Test]
+            public void GetSampleDetail()
+            {
+                //arange
+                var fixture = new Fixture();
+                var queryParameters = _fixture.Create<QueryParameters>();
+                IEnumerable<Lsf1SampleDTO> SampleDTOList = fixture.Create<IEnumerable<Lsf1SampleDTO>>();
+                List<Lsf1SampleModel> SampleModelList = fixture.Create<List<Lsf1SampleModel>>();
+                _commonSampleRepo.Setup(m => m.GetSampleDetails<Lsf1SampleDTO>(queryParameters.sampleID, queryParameters.chaseID, "LSF1")).Returns(SampleDTOList);
+                _mapper.Setup(m => m.Map<List<Lsf1SampleDTO>, List<Lsf1SampleModel>>(It.IsAny<List<Lsf1SampleDTO>>())).Returns(SampleModelList);
+
+                //act
+                _lsf1SampleService.GetSampleDetails(queryParameters);
+
+                //arrange
+                _mapper.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class InsertMethod : Lsf1SampleServiceTests
+        {
+            [Test]
+            public void Should_update_chase_record_if_there_is_existing_data_for_same_chase_id()
+            {
+                //arrange
+                var fixture = new Fixture();
+                Lsf1SampleModel globalRecord = fixture.Create<Lsf1SampleModel>();
+                Lsf1ChaseSampleVM ChaseSampleVM = new Lsf1ChaseSampleVM() { Action = ActionButtonType.DctSave.ToString(), overreadDetail = new OverreadDetailModel() };
+                ChaseSampleVM.ChaseDetail = new ChaseReportLinkModel() { ChaseReportLinkId = 1, SampleId = 2 };
+                ChaseSampleVM.SampleDetail = new Lsf1SampleModel() { ChaseReportLinkId = 1, SampleId = 2, Reviewer = "MANAGER" };
+                ChaseSampleVM.ExclusionDetail = new ExclusionModel() { Comments = RandomData.GetString(), ChaseReportlinkId = 1, SampleId = 1 };
+                ChaseSampleVM.NonComplianceReasonDetail = new List<SampleNonComplianceReasonModel>()
+                {
+                    new SampleNonComplianceReasonModel
+                    {
+                    ChaseReportLinkId=1,SampleId=2,Id=1,ReviewDate=DateTime.Now,Reviewer="MANAGER"
+                    }
+                };
+                Lsf1SampleDTO SampleDto = new Lsf1SampleDTO() { REVIEWER = "MANAGER" };
+                ChaseReportLinkDTO chaseReportLinkDTO = new ChaseReportLinkDTO();
+                _mapper.Setup(m => m.Map<Lsf1SampleModel, Lsf1SampleDTO>(ChaseSampleVM.SampleDetail)).Returns(SampleDto);
+                _mapper.Setup(m => m.Map<ChaseReportLinkModel, ChaseReportLinkDTO>(ChaseSampleVM.ChaseDetail)).Returns(chaseReportLinkDTO);
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+
+                Lsf1SampleDTO oldDataDto = new Lsf1SampleDTO() { REVIEWER = "Manager" };
+                Lsf1SampleModel oldData = new Lsf1SampleModel() { Reviewer = "Manager" };
+                ExclusionDTO exclusionDTO = new ExclusionDTO();
+                List<SampleNonComplianceDTO> sampleNonComplianceDTOs = new List<SampleNonComplianceDTO>();
+                string userName = "Manager";
+                var previousData = _fixture.Create<IEnumerable<Lsf1SampleDTO>>();
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _commonSampleRepo.Setup(x => x.GetChaseRecord<Lsf1SampleDTO>(0, 0, SampleDto.REVIEWER, "LSF1", connection)).Returns(oldDataDto);
+                _mapper.Setup(x => x.Map<Lsf1SampleModel>(oldDataDto)).Returns(oldData);
+                _lsf1ComplianceRepo.Setup(x => x.Update(SampleDto, false, connection));
+                _commonSampleRepo.Setup(x => x.GetAllChaseRecord<Lsf1SampleDTO>(0, 0, "LSF1", connection)).Returns(previousData);
+
+                _exclusionService.Setup(x => x.Save(ChaseSampleVM.ExclusionDetail, connection));
+                _chaseReportLinkRepo.Setup(x => x.UpdateChaseWithAbstractionDetails(chaseReportLinkDTO, connection, false));
+                _sampleNonComplianceRepo.Setup(x => x.DeleteExistingNcrID(0, 0, connection)).Returns(true);
+                _mapper.Setup(x => x.Map<List<SampleNonComplianceReasonModel>, List<SampleNonComplianceDTO>>(ChaseSampleVM.NonComplianceReasonDetail)).Returns(sampleNonComplianceDTOs);
+                _sampleNonComplianceRepo.Setup(x => x.CaptureSampleComplianceRsnCode(sampleNonComplianceDTOs, connection)).Returns(true);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(SampleDto.ID, userName, connection));
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(SampleDto.ID, connection)).Returns(1);
+                OrgOverreadQAConfigModel overreadQAConfig = new OrgOverreadQAConfigModel();
+                _overreadService.Setup(x => x.GetOverreadQaConfig()).Returns(overreadQAConfig);
+                _chaseWorkFlowService.Setup(x => x.UpdateWorkFlowStatus(ActionButtonType.DctSave, overreadQAConfig, SampleDto.CHASE_REPORT_LINK_ID, null, connection));
+
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(SampleDto.ID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(2, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.Insert(ChaseSampleVM);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _lsf1ComplianceRepo.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadService.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+
+            }
+
+            [Test]
+            public void Should_update_chase_record_if_there_is_existing_data_for_same_chase_id_when_permission_is_overreaderQa()
+            {
+                //arrange
+                var fixture = new Fixture();
+                Lsf1SampleModel globalRecord = fixture.Create<Lsf1SampleModel>();
+                Lsf1ChaseSampleVM ChaseSampleVM = new Lsf1ChaseSampleVM() { Action = ActionButtonType.OverreadComplete.ToString(), overreadDetail = new OverreadDetailModel() };
+                ChaseSampleVM.ChaseDetail = new ChaseReportLinkModel() { ChaseReportLinkId = 1, SampleId = 2 };
+                ChaseSampleVM.SampleDetail = new Lsf1SampleModel() { ChaseReportLinkId = 1, SampleId = 2, Reviewer = "MANAGER" };
+                ChaseSampleVM.ExclusionDetail = new ExclusionModel() { Comments = RandomData.GetString(), ChaseReportlinkId = 1, SampleId = 1 };
+                ChaseSampleVM.overreadDetail = new OverreadDetailModel() { ChaseId = 1, SampleId = 2 };
+                ChaseSampleVM.overreadComments = new OverreadCommentsModel() { ChaseId = 1, SampleId = 2 };
+                ChaseSampleVM.NonComplianceReasonDetail = new List<SampleNonComplianceReasonModel>()
+                {
+                    new SampleNonComplianceReasonModel
+                    {
+                    ChaseReportLinkId=1,SampleId=2,Id=1,ReviewDate=DateTime.Now,Reviewer="MANAGER"
+                    }
+                };
+                Lsf1SampleDTO SampleDto = new Lsf1SampleDTO() { REVIEWER = "MANAGER" };
+                ChaseReportLinkDTO chaseReportLinkDTO = new ChaseReportLinkDTO();
+                _mapper.Setup(m => m.Map<Lsf1SampleModel, Lsf1SampleDTO>(ChaseSampleVM.SampleDetail)).Returns(SampleDto);
+                _mapper.Setup(m => m.Map<ChaseReportLinkModel, ChaseReportLinkDTO>(ChaseSampleVM.ChaseDetail)).Returns(chaseReportLinkDTO);
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+
+                Lsf1SampleDTO oldDataDto = new Lsf1SampleDTO() { REVIEWER = "Manager" };
+                Lsf1SampleModel oldData = new Lsf1SampleModel() { Reviewer = "Manager" };
+                ExclusionDTO exclusionDTO = new ExclusionDTO();
+                List<SampleNonComplianceDTO> sampleNonComplianceDTOs = new List<SampleNonComplianceDTO>();
+                string userName = "Manager";
+                var previousData = _fixture.Create<IEnumerable<Lsf1SampleDTO>>();
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _commonSampleRepo.Setup(x => x.GetChaseRecord<Lsf1SampleDTO>(0, 0, SampleDto.REVIEWER, "LSF1", connection)).Returns(oldDataDto);
+                _mapper.Setup(x => x.Map<Lsf1SampleModel>(oldDataDto)).Returns(oldData);
+                _lsf1ComplianceRepo.Setup(x => x.Update(SampleDto, false, connection));
+
+                _commonSampleRepo.Setup(x => x.GetAllChaseRecord<Lsf1SampleDTO>(0, 0, "LSF1", connection)).Returns(previousData);
+                _exclusionService.Setup(x => x.Save(ChaseSampleVM.ExclusionDetail, connection));
+                OrgOverreadQAConfigModel overreadQAConfig = new OrgOverreadQAConfigModel();
+                _overreadService.Setup(x => x.GetOverreadQaConfig()).Returns(overreadQAConfig);
+                _overreadService.Setup(x => x.SaveOverreadDetails(ChaseSampleVM.overreadDetail, ChaseSampleVM.overreadComments, overreadQAConfig, "OverreadComplete", connection));
+                _chaseReportLinkRepo.Setup(x => x.UpdateChaseWithAbstractionDetails(chaseReportLinkDTO, connection, true));
+                _sampleNonComplianceRepo.Setup(x => x.DeleteExistingNcrID(0, 0, connection)).Returns(true);
+                _mapper.Setup(x => x.Map<List<SampleNonComplianceReasonModel>, List<SampleNonComplianceDTO>>(ChaseSampleVM.NonComplianceReasonDetail)).Returns(sampleNonComplianceDTOs);
+               
+                _sampleNonComplianceRepo.Setup(x => x.CaptureSampleComplianceRsnCode(sampleNonComplianceDTOs, connection)).Returns(true);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(SampleDto.ID, userName, connection));
+
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(SampleDto.ID, connection)).Returns(1);
+                _chaseWorkFlowService.Setup(x => x.UpdateWorkFlowStatus(ActionButtonType.OverreadComplete, overreadQAConfig, SampleDto.CHASE_REPORT_LINK_ID, null, connection));
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(SampleDto.ID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(2, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.Insert(ChaseSampleVM);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadService.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+
+            }
+
+            [Test]
+            public void Should_insert_new_chase_record_if_there_is_no_existing_data_for_same_chase_id()
+            {
+                //arrange
+                var fixture = new Fixture();
+                Lsf1SampleModel globalRecord = fixture.Create<Lsf1SampleModel>();
+                Lsf1ChaseSampleVM ChaseSample = new Lsf1ChaseSampleVM() { Action = ActionButtonType.DctSave.ToString(), overreadDetail = new OverreadDetailModel() };
+                ChaseSample.ChaseDetail = new ChaseReportLinkModel() { ChaseReportLinkId = 1, SampleId = 2 };
+                ChaseSample.SampleDetail = new Lsf1SampleModel() { ChaseReportLinkId = 1, SampleId = 2, Reviewer = "MANAGER" };
+                ChaseSample.ExclusionDetail = new ExclusionModel() { Comments = RandomData.GetString(), ChaseReportlinkId = 1, SampleId = 1 };
+                ChaseSample.NonComplianceReasonDetail = new List<SampleNonComplianceReasonModel>()
+                {
+                    new SampleNonComplianceReasonModel
+                    {
+                    ChaseReportLinkId=1,SampleId=2,Id=1,ReviewDate=DateTime.Now,Reviewer="MANAGER"
+                    }
+                };
+                Lsf1SampleDTO SampleDTO = new Lsf1SampleDTO() { REVIEWER = "MANAGER" };
+                ChaseReportLinkDTO chaseReportLinkDTO = new ChaseReportLinkDTO();
+                string userName = "Manager";
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _mapper.Setup(m => m.Map<Lsf1SampleModel, Lsf1SampleDTO>(ChaseSample.SampleDetail)).Returns(SampleDTO);
+                _mapper.Setup(m => m.Map<ChaseReportLinkModel, ChaseReportLinkDTO>(ChaseSample.ChaseDetail)).Returns(chaseReportLinkDTO);
+
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+                Lsf1SampleDTO oldDataDto = new Lsf1SampleDTO();
+                Lsf1SampleModel oldData = null;
+                var previousData = _fixture.Create<IEnumerable<Lsf1SampleDTO>>();
+                List<SampleNonComplianceDTO> sampleNonComplianceDTOs = new List<SampleNonComplianceDTO>();
+                _commonSampleRepo.Setup(x => x.GetChaseRecord<Lsf1SampleDTO>(0, 0, "MANAGER", "LSF1", connection)).Returns(oldDataDto);
+                _commonSampleRepo.Setup(x => x.GetAllChaseRecord<Lsf1SampleDTO>(0, 0, "LSF1", connection)).Returns(previousData);
+                _mapper.Setup(x => x.Map<Lsf1SampleModel>(oldDataDto)).Returns(oldData);
+                _lsf1SampleHistoryManagementComponent.Setup(x => x.InsertHistory(0, 0, "MANAGER", null, connection));
+                _lsf1SampleRepo.Setup(x => x.Insert(SampleDTO, connection));
+                _exclusionService.Setup(x => x.Save(ChaseSample.ExclusionDetail, connection));
+                _chaseReportLinkRepo.Setup(x => x.UpdateChaseWithAbstractionDetails(chaseReportLinkDTO, connection, false));
+                _sampleNonComplianceRepo.Setup(x => x.DeleteExistingNcrID(0, 0, connection)).Returns(true);
+                _mapper.Setup(x => x.Map<List<SampleNonComplianceReasonModel>, List<SampleNonComplianceDTO>>(ChaseSample.NonComplianceReasonDetail)).Returns(sampleNonComplianceDTOs);
+                _sampleNonComplianceRepo.Setup(x => x.CaptureSampleComplianceRsnCode(sampleNonComplianceDTOs, connection)).Returns(true);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(SampleDTO.ID, userName, connection));
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(SampleDTO.ID, connection)).Returns(1);
+               
+                OrgOverreadQAConfigModel overreadQAConfig = new OrgOverreadQAConfigModel();
+                _overreadService.Setup(x => x.GetOverreadQaConfig()).Returns(overreadQAConfig);
+                _chaseWorkFlowService.Setup(x => x.UpdateWorkFlowStatus(ActionButtonType.DctSave, overreadQAConfig, SampleDTO.CHASE_REPORT_LINK_ID, null, connection));
+
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(SampleDTO.ID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(2, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.Insert(ChaseSample);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _lsf1ComplianceRepo.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadService.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+
+            }
+
+            [Test]
+            public void Should_insert_chase_record_with_review_complete()
+            {
+                //arrange
+                var fixture = new Fixture();
+                Lsf1SampleModel globalRecord = fixture.Create<Lsf1SampleModel>();
+                Lsf1ChaseSampleVM ChaseSample = new Lsf1ChaseSampleVM() { Action = ActionButtonType.DctSave.ToString(), overreadDetail = new OverreadDetailModel() };
+                ChaseSample.ChaseDetail = new ChaseReportLinkModel() { ChaseReportLinkId = 1, SampleId = 2 };
+                ChaseSample.SampleDetail = new Lsf1SampleModel() { ChaseReportLinkId = 1, SampleId = 2, Reviewer = "MANAGER" };
+                ChaseSample.ExclusionDetail = new ExclusionModel() { Comments = RandomData.GetString(), ChaseReportlinkId = 1, SampleId = 1 };
+                ChaseSample.Action = ActionButtonType.ReviewComplete.ToString();
+                ChaseSample.NonComplianceReasonDetail = new List<SampleNonComplianceReasonModel>()
+                {
+                    new SampleNonComplianceReasonModel
+                    {
+                    ChaseReportLinkId=1,SampleId=2,Id=1,ReviewDate=DateTime.Now,Reviewer="MANAGER"
+                    }
+                };
+                Lsf1SampleDTO SampleDTO = new Lsf1SampleDTO() { REVIEWER = "MANAGER" };
+                ChaseReportLinkDTO chaseReportLinkDTO = new ChaseReportLinkDTO();
+                string userName = "Manager";
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _mapper.Setup(m => m.Map<Lsf1SampleModel, Lsf1SampleDTO>(ChaseSample.SampleDetail)).Returns(SampleDTO);
+                _mapper.Setup(m => m.Map<ChaseReportLinkModel, ChaseReportLinkDTO>(ChaseSample.ChaseDetail)).Returns(chaseReportLinkDTO);
+
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+                Lsf1SampleDTO oldDataDto = new Lsf1SampleDTO();
+                Lsf1SampleModel oldData = null;
+                var previousData = _fixture.Create<IEnumerable<Lsf1SampleDTO>>();
+                List<SampleNonComplianceDTO> sampleNonComplianceDTOs = new List<SampleNonComplianceDTO>();
+                _commonSampleRepo.Setup(x => x.GetChaseRecord<Lsf1SampleDTO>(0, 0, "MANAGER", "LSF1", connection)).Returns(oldDataDto);
+                _commonSampleRepo.Setup(x => x.GetAllChaseRecord<Lsf1SampleDTO>(0, 0, "LSF1", connection)).Returns(previousData);
+                _mapper.Setup(x => x.Map<Lsf1SampleModel>(oldDataDto)).Returns(oldData);
+
+                _lsf1SampleHistoryManagementComponent.Setup(x => x.InsertHistory(0, 0, "MANAGER", null, connection));
+                _lsf1SampleRepo.Setup(x => x.Insert(SampleDTO, connection));
+                _exclusionService.Setup(x => x.Save(ChaseSample.ExclusionDetail, connection));
+                _chaseReportLinkRepo.Setup(x => x.UpdateChaseWithAbstractionDetails(chaseReportLinkDTO, connection, false));
+                _sampleNonComplianceRepo.Setup(x => x.DeleteExistingNcrID(0, 0, connection)).Returns(true);
+                _mapper.Setup(x => x.Map<List<SampleNonComplianceReasonModel>, List<SampleNonComplianceDTO>>(ChaseSample.NonComplianceReasonDetail)).Returns(sampleNonComplianceDTOs);
+                _sampleNonComplianceRepo.Setup(x => x.CaptureSampleComplianceRsnCode(sampleNonComplianceDTOs, connection)).Returns(true);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(SampleDTO.ID, userName, connection));
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(SampleDTO.ID, connection)).Returns(1);
+                OrgOverreadQAConfigModel overreadQAConfig = new OrgOverreadQAConfigModel();
+                _overreadService.Setup(x => x.GetOverreadQaConfig()).Returns(overreadQAConfig);
+                _chaseWorkFlowService.Setup(x => x.UpdateWorkFlowStatus(ActionButtonType.ReviewComplete, overreadQAConfig, SampleDTO.CHASE_REPORT_LINK_ID, null, connection));
+                _overreadService.Setup(x => x.SaveOverreadDetails(ChaseSample.overreadDetail, ChaseSample.overreadComments, overreadQAConfig, ChaseSample.Action, connection));
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(SampleDTO.ID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(2, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.Insert(ChaseSample);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _lsf1ComplianceRepo.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadService.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+
+            }
+
+            [Test]
+            public void Should_delete_chase_record()
+            {
+                //arrange
+                QueryParameters queryParameters = new QueryParameters() { sampleID = 1, chaseID = 11, reviewer = "Manager" };
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                string userName = "Manager";
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+                _lsf1SampleHistoryManagementComponent.Setup(x => x.InsertHistory(queryParameters.sampleID, queryParameters.chaseID, queryParameters.reviewer, null, connection));
+                _exclusionService.Setup(x => x.UpdateExclusionStatus(queryParameters.chaseID, "DELETED", connection)).Returns(true);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(queryParameters.sampleID, userName, connection));
+                _sampleNonComplianceRepo.Setup(x => x.UpdateNonComplianceRSNCodeStatus(queryParameters.chaseID, "DELETED", connection)).Returns(1);
+                _chaseReportLinkRepo.Setup(x => x.DeleteChaseDataByChaseId(queryParameters.chaseID, connection));
+                _overreadRepo.Setup(x => x.InactivateOverreadInformation(queryParameters.sampleID, queryParameters.chaseID, connection));
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(queryParameters.sampleID, connection)).Returns(1);
+                _chaseReportLinkRepo.Setup(x => x.InsertChaseWorkFlowHistory(It.IsAny<ChaseWorkflowHistoryDto>(), connection));
+                _chaseWorkFlowService.Setup(x => x.DeleteChaseWorkflowHistory(queryParameters.chaseID, connection));
+                _chaseReportLinkRepo.Setup(x => x.UpdateWorkflowStatus(queryParameters.chaseID, 0, connection));
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(queryParameters.sampleID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(queryParameters.sampleID, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.UpdateChaseDataWithDeleteStatus(queryParameters);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _lsf1SampleHistoryManagementComponent.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadRepo.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+            }
+
+
+            [Test]
+            public void Should_delete_chase_record_and_overread_details_when_overreaderQA()
+            {
+                //arrange
+                QueryParameters queryParameters = new QueryParameters() { sampleID = 1, chaseID = 11, reviewer = "Manager", isOverreaderQa = true };
+                ITransactionScopeWrapper transactionScopeWrapper = new TransactionScopeWrapper();
+                IDbConnection connection = new SqlConnection();
+                string userName = "Manager";
+                _currentUser.Setup(i => i.RunDate).Returns(new DateTime());
+                _currentUser.Setup(x => x.UserName).Returns(userName);
+                _transactionScopeFactory.Setup(x => x.CreateTransactionScope()).Returns(transactionScopeWrapper);
+                _connectionFactory.Setup(x => x.GetOpenConnection()).Returns(connection);
+                _lsf1SampleHistoryManagementComponent.Setup(x => x.InsertHistory(queryParameters.sampleID, queryParameters.chaseID, queryParameters.reviewer, null, connection));
+                _exclusionService.Setup(x => x.UpdateExclusionStatus(queryParameters.chaseID, "DELETED", connection)).Returns(true);
+                _sampleNonComplianceRepo.Setup(x => x.UpdateNonComplianceRSNCodeStatus(queryParameters.chaseID, "DELETED", connection)).Returns(1);
+                _lsf1SampleComplianceService.Setup(x => x.CalculateSampleCompliance(queryParameters.sampleID, userName, connection));
+                _overreadService.Setup(x => x.DeleteOverreadDetails(queryParameters, connection));
+
+                _chaseReportLinkRepo.Setup(x => x.DeleteChaseDataByChaseId(queryParameters.chaseID, connection));
+                _overreadRepo.Setup(x => x.InactivateOverreadInformation(queryParameters.sampleID, queryParameters.chaseID, connection));
+                _sampleCompleteService.Setup(x => x.UpdateCompleteWhenFullyCompliant(queryParameters.sampleID, connection)).Returns(1);
+                _chaseReportLinkRepo.Setup(x => x.UpdateWorkflowStatus(queryParameters.chaseID, 0, connection));
+                _chaseWorkFlowService.Setup(x => x.DeleteChaseWorkflowHistory(queryParameters.chaseID, connection));
+                _chaseExhaustedService.Setup(x => x.ExhaustChases(queryParameters.sampleID, connection));
+                _runDstService.Setup(x => x.ExecuteDSTData(queryParameters.sampleID, 10004, new DateTime(), userName, false));
+                //act
+                _lsf1SampleService.UpdateChaseDataWithDeleteStatus(queryParameters);
+                //assert
+                _lsf1SampleRepo.VerifyAll();
+                _lsf1SampleHistoryManagementComponent.VerifyAll();
+                _exclusionService.VerifyAll();
+                _commonSampleRepo.VerifyAll();
+                _currentUser.VerifyAll();
+                _chaseExhaustedService.VerifyAll();
+                _chaseWorkFlowService.VerifyAll();
+                _overreadRepo.VerifyAll();
+                _runDstService.VerifyAll();
+                _sampleCompleteService.VerifyAll();
+                _sampleNonComplianceRepo.VerifyAll();
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Lsf1 repo unit test
+
+using AutoFixture;
+using Exceptionless;
+using FluentAssertions;
+using Moq;
+using NUnit.Framework;
+using QI.QEL.DAL.Compliance.DTO;
+using QI.QEL.Database;
+using QI.QR.DAL.DTO.DataCollection;
+using QI.QR.DAL.Repos.DataCollection.StateAndCustomMeasure;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Text;
+
+namespace QI.QR.DAL.Tests.Unit.Repos.DataCollection.StateAndCustomMeasures
+{
+    [TestFixture]
+    public class Lsf1SampleRepoTests
+    {
+        private Lsf1SampleRepo _lsf1SampleRepo;
+        private Mock<IDapperManager> _dapperManager;
+        private Fixture _fixture;
+        [SetUp]
+        public void Lsf1SampleRepoTestsSetUp()
+        {
+            _dapperManager = new Mock<IDapperManager>(MockBehavior.Strict);
+            _lsf1SampleRepo = new Lsf1SampleRepo(_dapperManager.Object);
+            _fixture = new Fixture();
+        }
+
+        [TestFixture]
+        public class InsertMethod : Lsf1SampleRepoTests
+        {
+            [Test]
+            public void Should_insert_data_to_sample_Lsf1_table()
+            {
+                //arrange
+                object expectedParameters = new object();
+                object actualParameters = new object();
+                Lsf1SampleDTO SampleDTO = _fixture.Create<Lsf1SampleDTO>();
+                _dapperManager
+               .Setup(m => m.Execute(null, @"INSERT INTO SAMPLE_LSF1(ID,CHASE_REPORT_LINK_ID,LOC_ID,REVIEW_DATE,REVIEWER,EVAL_DATE, EVALUATION,
+                                                    NOT_AMBULATORY,NUM1,VALID_DATA_ERROR,COMPLETE,EXCLUSIONS_COMPLETE,REC_STATUS,REC_SOURCE,LAST_TOUCHED)
+                                                    VALUES(@ID,@CHASE_REPORT_LINK_ID,@LOC_ID,@REVIEW_DATE,@REVIEWER,@EVAL_DATE,@EVALUATION, @NOT_AMBULATORY,@NUM1,
+                                                    @VALID_DATA_ERROR,@COMPLETE,@EXCLUSIONS_COMPLETE,@REC_STATUS,@REC_SOURCE,@LAST_TOUCHED)", It.IsAny<Lsf1SampleDTO>(), null, null, null))
+               .Callback<IDbConnection, string, object, IDbTransaction, int?, CommandType?>((con, sqPc01ript, param, transction, timeout, commandType) => { actualParameters = (Lsf1SampleDTO)param; })
+               .Returns(RandomData.GetInt())
+               ;
+                //act
+                _lsf1SampleRepo.Insert(SampleDTO);
+
+                //assert
+                _dapperManager.VerifyAll();
+                actualParameters.GetType().GetProperty("COMPLETE").GetValue(actualParameters)
+                .Should().Be(SampleDTO.COMPLETE);
+                actualParameters.GetType().GetProperty("EVALUATION").GetValue(actualParameters)
+               .Should().Be(SampleDTO.EVALUATION);
+                actualParameters.GetType().GetProperty("EVAL_DATE").GetValue(actualParameters)
+               .Should().Be(SampleDTO.EVAL_DATE);
+                actualParameters.GetType().GetProperty("NUM1").GetValue(actualParameters)
+              .Should().Be(SampleDTO.NUM1);
+            }
+
+
+            [Test]
+            public void Should_insert_data_to_sample_Lsf1_sample_history_table()
+            {
+                //arrange
+                object expectedParameters = new object();
+                object actualParameters = new object();
+                List<Lsf1SampleHistoryDTO> SampleDTO = new List<Lsf1SampleHistoryDTO>() { new Lsf1SampleHistoryDTO { } };
+
+                _dapperManager
+               .Setup(m => m.Execute(null, @"INSERT INTO SAMPLE_LSF1_HISTORY(ID,CHASE_REPORT_LINK_ID,LOC_ID,REVIEW_DATE,REVIEWER,EVAL_DATE, EVALUATION,
+                                                    NOT_AMBULATORY,NUM1,VALID_DATA_ERROR,COMPLETE,EXCLUSIONS_COMPLETE,REC_STATUS,REC_SOURCE,LAST_TOUCHED)
+                                                    VALUES(@ID,@CHASE_REPORT_LINK_ID,@LOC_ID,@REVIEW_DATE,@REVIEWER,@EVAL_DATE,@EVALUATION, @NOT_AMBULATORY,@NUM1,
+                                                    @VALID_DATA_ERROR,@COMPLETE,@EXCLUSIONS_COMPLETE,@REC_STATUS,@REC_SOURCE,@LAST_TOUCHED)", It.IsAny<List<Lsf1SampleHistoryDTO>>(), null, null, null))
+               .Callback<IDbConnection, string, object, IDbTransaction, int?, CommandType?>((con, sqPc01ript, param, transction, timeout, commandType) => { actualParameters = param; })
+               .Returns(RandomData.GetInt())
+               ;
+                //act
+                _lsf1SampleRepo.InsertHistory(SampleDTO, null);
+
+                //assert
+                _dapperManager.VerifyAll();
+                actualParameters.Should().Be(SampleDTO);
+            }
+
+            [Test]
+            public void Should_insert_data_InsertSampleIrr()
+            {
+                //arrange
+                object expectedParameters = new object();
+                object actualParameters = new object();
+                Lsf1SampleDTO SampleDTO = new Lsf1SampleDTO();
+
+                _dapperManager
+               .Setup(m => m.Execute(null, @"INSERT INTO SAMPLE_LSF1_IRR(ID,CHASE_REPORT_LINK_ID,LOC_ID,REVIEW_DATE,REVIEWER,EVAL_DATE, EVALUATION,
+                                                        NOT_AMBULATORY,NUM1,VALID_DATA_ERROR,COMPLETE,EXCLUSIONS_COMPLETE,REC_STATUS,REC_SOURCE,LAST_TOUCHED,ATTEMPT,TEST_TYPE)
+                                                        VALUES(@ID,@CHASE_REPORT_LINK_ID,@LOC_ID,@REVIEW_DATE,@REVIEWER,@EVAL_DATE,@EVALUATION, @NOT_AMBULATORY,@NUM1,
+                                                        @VALID_DATA_ERROR,@COMPLETE,@EXCLUSIONS_COMPLETE,@REC_STATUS,@REC_SOURCE,@LAST_TOUCHED,@ATTEMPT,@TEST_TYPE)", It.IsAny<Lsf1SampleDTO>(), null, null, null))
+               .Callback<IDbConnection, string, object, IDbTransaction, int?, CommandType?>((con, sqPc01ript, param, transction, timeout, commandType) => { actualParameters = param; })
+               .Returns(RandomData.GetInt())
+               ;
+                //act
+                _lsf1SampleRepo.InsertSampleIrr(SampleDTO, null);
+
+                //assert
+                _dapperManager.VerifyAll();
+                actualParameters.Should().Be(SampleDTO);
+            }
+        }
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Milestone Repo unit test
+
+using AutoFixture;
+using Exceptionless;
+using Moq;
+using NUnit.Framework;
+using QI.AuthServ.DAL.DTO;
+using QI.AuthServ.DAL.Repos;
+using QI.QEL.Database;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Text;
+
+namespace QI.AuthServ.DAL.Tests.Unit.Repos
+{
+    [TestFixture]
+    public class MilestonesRepoTest
+    {
+        private IMilestonesRepo _milestonesRepo;
+        private Mock<IDapperManager> _dapperManager;
+        private Fixture _fixture;
+        private Mock<IDbConnection> _connection;
+
+        [SetUp]
+        public void MilestonesRepoTestSetUp()
+        {
+            _dapperManager = new Mock<IDapperManager>(MockBehavior.Strict);
+            _milestonesRepo = new MilestonesRepo(_dapperManager.Object);
+            _fixture = new Fixture();
+            _connection = new Mock<IDbConnection>(MockBehavior.Strict);
+        }
+
+        [TestFixture]
+        public class GetMilestones : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_Get_All_Milestones()
+            {
+                //arrange
+                var fixture = new Fixture();
+                var milestones = fixture.Create<IEnumerable<MILESTONE>>();
+                var measurementYear = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+
+                string query = @"SELECT M.* FROM MILESTONE M WHERE ORGID IN (@ORGID, 1) AND MEASUREMENT_YEAR = @MEASUREMENT_YEAR";
+                _dapperManager
+                   .Setup(m => m.Query<MILESTONE>(query, It.IsAny<object>(), null, true, null, null))
+                    .Returns(milestones);
+
+                //act
+                _milestonesRepo.GetMilestones(orgId, measurementYear);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class GetMilestone : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_Get_Milestone_By_name_and_measurement_Year()
+            {
+                //arrange
+                var fixture = new Fixture();
+                var milestone = fixture.Create<MILESTONE>();
+                var measurementYear = _fixture.Create<int>();
+                var name = _fixture.Create<string>();
+                var orgId = _fixture.Create<int>();
+
+
+                string query = @"SELECT * FROM(
+                                    SELECT MO.MILESTONE_NAME AS NAME , M.ID FROM MILESTONE M INNER JOIN MILESTONE_ORG_MAP MO ON MO.MILESTONEID = M.ID AND M.IS_CUSTOM = 1 AND MO.IS_DELETED = 0 AND MO.ORGID = @ORGID
+                                    UNION ALL
+                                    SELECT NAME, ID FROM MILESTONE WHERE ORGID IN (1,@ORGID) AND MEASUREMENT_YEAR = @MEASUREMENT_YEAR AND ID NOT IN (SELECT M.ID FROM MILESTONE M INNER JOIN MILESTONE_ORG_MAP MO ON MO.MILESTONEID = M.ID AND M.IS_CUSTOM = 1 AND MO.ORGID = @ORGID)
+                                    ) WHERE TRIM(NAME) = @NAME";
+                _dapperManager
+                 .Setup(m => m.QuerySingleOrDefault<MILESTONE>(_connection.Object, query, It.IsAny<MILESTONE>(), null, null, null))
+                  .Returns(milestone);
+
+                //act
+                _milestonesRepo.GetMilestone(name, measurementYear,orgId, _connection.Object);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class GetOrgMapMilestones : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_Get_organization_milestones()
+            {
+                //arrange
+                var fixture = new Fixture();
+                var orgMilestones = fixture.Create<IEnumerable<MILESTONE_ORG_MAP>>();
+                var measurementYear = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+
+                string query = @"SELECT OM.* FROM MILESTONE_ORG_MAP OM
+                            INNER JOIN MILESTONE M ON M.ID = OM.MILESTONEID
+                            WHERE M.MEASUREMENT_YEAR = @MEASUREMENT_YEAR
+                            AND OM.ORGID = @ORGID";
+                _dapperManager
+                   .Setup(m => m.Query<MILESTONE_ORG_MAP>(query, It.IsAny<object>(), null, true, null, null))
+                    .Returns(orgMilestones);
+
+                //act
+                _milestonesRepo.GetOrgMapMilestones(orgId, measurementYear);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class GetUserMapMilestones : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_Get_user_map_milestones()
+            {
+                //arrange
+                var fixture = new Fixture();
+                var userMapMilestones = fixture.Create<IEnumerable<MILESTONE_USER_MAP>>();
+                var measurementYear = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+                var userId = _fixture.Create<int>();
+
+                string query = @"SELECT UM.* FROM MILESTONE_USER_MAP UM
+                            INNER JOIN MILESTONE M ON M.ID = UM.MILESTONEID
+                            WHERE M.MEASUREMENT_YEAR = @MEASUREMENT_YEAR
+                            AND UM.ORGID = @ORGID
+                            AND UM.USERID = @USERID";
+                _dapperManager
+                   .Setup(m => m.Query<MILESTONE_USER_MAP>(query, It.IsAny<object>(), null, true, null, null))
+                    .Returns(userMapMilestones);
+
+                //act
+                _milestonesRepo.GetUserMapMilestones(userId, orgId, measurementYear);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class Create : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_create_milestone()
+            {
+                //arrange
+                var milestone = _fixture.Create<MILESTONE>();
+                // var connection = _fixture.Create<DbConnection>();
+                string query = @"INSERT INTO MILESTONE
+                              (ORGID
+                              ,NAME
+                              ,MILESTONE_DATE
+                              ,CREATED_BY
+                              ,CREATED_ON
+                              ,UPDATED_BY
+                              ,UPDATED_ON
+                              ,MEASUREMENT_YEAR,IS_CUSTOM)
+                        VALUES
+                              (@ORGID
+                              ,@NAME
+                              ,@MILESTONE_DATE
+                              ,@CREATED_BY
+                              ,@CREATED_ON
+                              ,@UPDATED_BY
+                              ,@UPDATED_ON
+                              ,@MEASUREMENT_YEAR,@IS_CUSTOM)
+                            ";
+                _dapperManager
+                      .Setup(m => m.Execute(query, milestone, null, null, null))
+                      .Returns(RandomData.GetInt());
+
+                query = @"SELECT ID FROM MILESTONE WHERE NAME=@NAME AND ORGID=@ORGID";
+
+                _dapperManager
+                     .Setup(m => m.QuerySingleOrDefault<int>(query, milestone, null, null, null))
+                      .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.Create(milestone);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class Update : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_update_milestone()
+            {
+                //arrange
+                var milestone = _fixture.Create<MILESTONE>();
+
+                string query = @"
+                           UPDATE MILESTONE
+                                   SET ORGID = @ORGID
+                                      ,NAME = @NAME
+                                      ,MILESTONE_DATE = @MILESTONE_DATE
+                                      ,UPDATED_BY = @UPDATED_BY
+                                      ,UPDATED_ON = @UPDATED_ON
+                                      ,MEASUREMENT_YEAR = @MEASUREMENT_YEAR
+                                 WHERE ID = @ID";
+
+                _dapperManager
+                 .Setup(m => m.Execute(_connection.Object, query, milestone, null, null, null))
+                 .Returns(RandomData.GetInt());
+
+
+                //action
+                _milestonesRepo.Update(milestone, _connection.Object);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class Delete : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_delete_milestone()
+            {
+                //arrange
+                var milestoneId = _fixture.Create<int>();
+
+                string query = string.Format(@"DELETE FROM MILESTONE WHERE ID = @ID");
+                _dapperManager
+                .Setup(m => m.Execute(query, It.IsAny<object>(), null, null, null))
+                .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.Delete(milestoneId);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class DeleteMilestoneOrgMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_delete_milestone_organization_maps()
+            {
+                //arrange
+                var milestoneId = _fixture.Create<int>();
+
+                string query = string.Format(@"DELETE FROM MILESTONE_ORG_MAP WHERE MILESTONEID = @MILESTONEID");
+                _dapperManager
+                .Setup(m => m.Execute(query, It.IsAny<object>(), null, null, null))
+                .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.DeleteMilestoneOrgMap(milestoneId);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class GetMilestoneOrgMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_get_milestone_organization_maps()
+            {
+                //arrange
+                var milestoneId = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+                var orgMilestone = _fixture.Create<MILESTONE_ORG_MAP>();
+
+                string query = string.Format(@"SELECT M.* FROM MILESTONE_ORG_MAP M WHERE ORGID = @ORGID AND MILESTONEID = @MILESTONEID");
+                _dapperManager
+                .Setup(m => m.QuerySingleOrDefault<MILESTONE_ORG_MAP>(_connection.Object, query, It.IsAny<object>(), null, null, null))
+                .Returns(orgMilestone);
+
+                //action
+                _milestonesRepo.GetMilestoneOrgMap(milestoneId, orgId, _connection.Object);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class SaveMilestoneOrgMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_save_milestone_organization_maps()
+            {
+                //arrange
+                var orgMilestone = _fixture.Create<MILESTONE_ORG_MAP>();
+
+                string query = @"INSERT INTO MILESTONE_ORG_MAP
+                              (MILESTONEID
+                              ,ORGID
+                              ,IS_HIDDEN
+                              ,COMPLETED_DATE ,MILESTONE_NAME ,IS_DELETED, DUE_DATE ,CREATED_BY
+                              ,CREATED_ON
+                              ,UPDATED_BY
+                              ,UPDATED_ON)
+                        VALUES
+                              (@MILESTONEID
+                              ,@ORGID
+                              ,@IS_HIDDEN
+                              ,@COMPLETED_DATE ,@MILESTONE_NAME ,@IS_DELETED ,@DUE_DATE,@CREATED_BY
+                              ,@CREATED_ON
+                              ,@UPDATED_BY
+                              ,@UPDATED_ON)
+                            ";
+                _dapperManager
+                     .Setup(m => m.Execute(_connection.Object, query, It.IsAny<MILESTONE_ORG_MAP>(), null, null, null))
+                     .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.SaveMilestoneOrgMap(orgMilestone, _connection.Object);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class UpdateMilestoneOrgMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_update_milestone_organization_maps()
+            {
+                //arrange
+                var orgMilestone = _fixture.Create<MILESTONE_ORG_MAP>();
+
+                string query = @"
+                           UPDATE MILESTONE_ORG_MAP
+                                   SET IS_HIDDEN = @IS_HIDDEN
+                                      ,COMPLETED_DATE = @COMPLETED_DATE, MILESTONE_NAME = @MILESTONE_NAME, IS_DELETED = @IS_DELETED, DUE_DATE = @DUE_DATE ,UPDATED_BY = @UPDATED_BY
+                                      ,UPDATED_ON = @UPDATED_ON
+                                 WHERE MILESTONEID = @MILESTONEID
+                                 AND ORGID = @ORGID";
+                _dapperManager
+                     .Setup(m => m.Execute(_connection.Object, query, It.IsAny<MILESTONE_ORG_MAP>(), null, null, null))
+                     .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.UpdateMilestoneOrgMap(orgMilestone, _connection.Object);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class SaveMilestoneUserMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_save_milestone_user_maps()
+            {
+                //arrange
+                var userMilestone = _fixture.Create<MILESTONE_USER_MAP>();
+
+                string query = @"INSERT INTO MILESTONE_USER_MAP
+                              (MILESTONEID
+                              ,USERID
+                              ,ORGID
+                              ,IS_HIDDEN)
+                        VALUES
+                              (@MILESTONEID
+                              ,@USERID
+                              ,@ORGID
+                              ,@IS_HIDDEN)
+                            ";
+                _dapperManager
+                     .Setup(m => m.Execute(query, It.IsAny<MILESTONE_USER_MAP>(), null, null, null))
+                     .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.SaveMilestoneUserMap(userMilestone);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+
+        [TestFixture]
+        public class DeleteMilestoneUserMap : MilestonesRepoTest
+        {
+            [Test]
+            public void Should_delete_milestone()
+            {
+                //arrange
+                var milestoneId = _fixture.Create<int>();
+                var orgId = _fixture.Create<int>();
+
+                string query = string.Format(@"DELETE FROM MILESTONE_USER_MAP WHERE MILESTONEID = @MILESTONEID AND ORGID = @ORGID");
+                _dapperManager
+                     .Setup(m => m.Execute(query, It.IsAny<object>(), null, null, null))
+                     .Returns(RandomData.GetInt());
+
+                //action
+                _milestonesRepo.DeleteMilestoneUserMap(milestoneId, orgId);
+
+                //assert
+                _dapperManager.VerifyAll();
+            }
+        }
+    }
+}
+
+
+
